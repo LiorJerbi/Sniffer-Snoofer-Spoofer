@@ -8,6 +8,8 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <sys/types.h> 
+#include <stdlib.h>
+
 
 //#### Task A - Sniffer ####//
 /* ethernet headers are always exactly 14 bytes */
@@ -75,7 +77,7 @@ struct appheader{
     uint16_t __;
 };
 
-
+int counter=0;
 void got_packet(u_char *args, const struct pcap_pkthdr *header, 
         const u_char *packet)
 {
@@ -84,29 +86,52 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header,
     struct ipheader * ip = (struct ipheader *)
                            (packet + sizeof(struct ethheader)); 
     printf("       From: %s\n", inet_ntoa(ip->iph_sourceip));  
-    printf("         To: %s\n", inet_ntoa(ip->iph_destip));   
+    printf("         To: %s\n", inet_ntoa(ip->iph_destip)); 
+    counter++;
     /* determine protocol */
     switch(ip->iph_protocol) {                               
         case IPPROTO_TCP:
         FILE *fp;
-        fp = fopen("314899493_315538454","w");     //the file we want to send
+        fp = fopen("314899493_315538454","a");     //the file we want to send
         if(fp== NULL){
             perror("failed open file\n");
             return;
         }
         int ip_header_len = ip->iph_ihl * 4;
         struct tcpheader * tcp = (struct tcpheader *)(packet + sizeof(struct ethheader) + ip_header_len);
-        u_int size_tcp = TH_OFF(tcp)*4;
-        struct appheader * app = (struct tcpheader *)(packet + sizeof(struct ethheader) + ip_header_len + size_tcp);
-        u_int size_app = app->length;
+        uint16_t size_tcp = tcp->th_offx2*4;
+        struct appheader * app = (struct appheader *)(packet + sizeof(struct ethheader) + ip_header_len + size_tcp);
         uint16_t flags = ntohs(app->flags);
-        
-        fprintf(fp,"source_ip:<%s>,dest_ip<%s>,source_port<%d>,dest_port<%d>,timestamp:<%u>,total_length:<%d>,cache_flag:<%d>,steps_flag:<%d>,type_flag:<%d>,status_code:<%d>,cache_control:<%d>,data:<%hhn>\n"
-                    ,inet_ntoa(ip->iph_sourceip),inet_ntoa(ip->iph_sourceip),ntohs(tcp->th_sport),ntohs(tcp->th_dport),ntohl(app->unixtime),app->length,(flags&app->c_flag),
-                    (flags&app->s_flag),(flags&app->t_flag),,ntohs(app->cache),payload);
+        uint16_t status = app->status;
+        uint32_t untime = ntohl(app->unixtime);
+        uint16_t app_len = ntohs(app->length);
+        char *payload = (char *)malloc(sizeof(uint8_t)*app_len);
+        memcpy(payload,(packet + sizeof(struct ethheader) + ip_header_len + size_tcp +sizeof(struct appheader) ),app_len);
+        fprintf(fp,"source_ip:<%s>,dest_ip<%s>,source_port<%d>,dest_port<%d>,timestamp:<%u>,total_length:<%hu>,cache_flag:<%hu>,steps_flag:<%hu>,type_flag:<%hu>,status_code:<%u>,cache_control:<%d>,\n"
+                    ,inet_ntoa(ip->iph_sourceip),inet_ntoa(ip->iph_sourceip),ntohs(tcp->th_sport),ntohs(tcp->th_dport),untime,app_len,(flags&app->c_flag),
+                    (flags&app->s_flag),(flags&app->t_flag),status,ntohs(app->cache));
+        for (int i = 0; i < app_len; ++i){
+            if (!(i & 15)){
+                fprintf(fp, "\n%04X: ", i);
+            }
+            fprintf(fp, "%02X ", ((unsigned char *)payload)[i]);
+        }
+        fprintf(fp,"\n\n\n");
         fclose(fp);
-            printf("   Protocol: TCP\n");
-            return;
+        printf(" \n ****************************************************** \n");
+        printf("  ************* FRAME NUM %d ********************************* \n",counter);
+        printf("--->Sent from IP Address:%s  Src_PORT:%d    To IP Adress:%s  Src_PORT:%d   \n",inet_ntoa(ip->iph_sourceip),ntohs(tcp->th_sport),inet_ntoa(ip->iph_sourceip),ntohs(tcp->th_dport));
+        printf("--->Unix Time:%u\n--->Packet Size:%d\n--->Flags<--\n:--->Cache:[%d]\n--->Steps:[%d]\n--->Type:[%d]  \n",ntohl(app->unixtime),app->length,(flags&app->c_flag),(flags&app->s_flag),(flags&app->t_flag));
+        printf("--->Status:[%d]\n--->Cache Control[%d]\n",status,ntohs(app->cache));
+        for (int i = 0; i < app_len; ++i){
+            if (!(i & 15)){
+                printf("\n%04X: ", i);
+            }
+            printf(" %02X ", ((unsigned char *)payload)[i]);
+        }
+        printf("\n");
+        free(payload);
+        return;
         case IPPROTO_UDP:
             printf("   Protocol: UDP\n");
             return;
@@ -127,7 +152,7 @@ int main()
 	char *dev;			/* The device to sniff on */
 	char errbuf[PCAP_ERRBUF_SIZE];	/* Error string */
 	struct bpf_program fp;		/* The compiled filter */
-	char filter_exp[] = "ip proto TCP";	/* The filter expression */
+	char filter_exp[] = "tcp";	/* The filter expression */
 	bpf_u_int32 mask;		/* Our netmask */
 	bpf_u_int32 net;		/* Our IP */
 	struct pcap_pkthdr header;	/* The header that pcap gives us */
