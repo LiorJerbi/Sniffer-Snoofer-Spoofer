@@ -97,11 +97,13 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header,
         int ip_header_len = ip->iph_ihl * 4;
         struct tcpheader * tcp = (struct tcpheader *)(packet + sizeof(struct ethheader) + ip_header_len);
         u_int size_tcp = TH_OFF(tcp)*4;
-        struct appheader * app = (struct tcpheader *)(packet + sizeof(struct ethheader) + ip_header_len)
-
-        fprintf(fp,"source_ip:<%s>,dest_ip<%s>,source_port<%d>,dest_port<%d>,timestamp:<%d>,total_length:<%d>,cache_flag:<%d>,steps_flag:<%d>,type_flag:<%d>,status_code:<%d>,cache_control:<%d>,data:<%hhn>",inet_ntoa(ip->iph_sourceip),inet_ntoa(ip->iph_sourceip),
-        ntohs(tcp->th_sport),ntohs(tcp->th_dport),(int)(header->ts.tv_sec),header->len,(ip->iph_flag&4),(ip->iph_flag&2),(ip->iph_flag&1),tcp->th_flags&TH_FLAGS,
-        tcp->th_urp&TH_URG,payload);
+        struct appheader * app = (struct tcpheader *)(packet + sizeof(struct ethheader) + ip_header_len + size_tcp);
+        u_int size_app = app->length;
+        uint16_t flags = ntohs(app->flags);
+        
+        fprintf(fp,"source_ip:<%s>,dest_ip<%s>,source_port<%d>,dest_port<%d>,timestamp:<%u>,total_length:<%d>,cache_flag:<%d>,steps_flag:<%d>,type_flag:<%d>,status_code:<%d>,cache_control:<%d>,data:<%hhn>\n"
+                    ,inet_ntoa(ip->iph_sourceip),inet_ntoa(ip->iph_sourceip),ntohs(tcp->th_sport),ntohs(tcp->th_dport),ntohl(app->unixtime),app->length,(flags&app->c_flag),
+                    (flags&app->s_flag),(flags&app->t_flag),,ntohs(app->cache),payload);
         fclose(fp);
             printf("   Protocol: TCP\n");
             return;
