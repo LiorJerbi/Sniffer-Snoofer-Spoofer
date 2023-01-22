@@ -1,14 +1,11 @@
 #include <stdio.h>
 #include <pcap.h>
 #include <string.h>
-#include <netinet/ip.h>
-#include <linux/if_packet.h>
-#include <net/ethernet.h>
+//#include <netinet/ip.h>
 #include <netinet/tcp.h>
-#include <arpa/inet.h>
+#include "arpa/inet.h"
 #include <sys/types.h> 
 #include <stdlib.h>
-#include <netinet/ether.h>
 #include <errno.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -42,7 +39,12 @@ struct ipheader {
     struct  in_addr    iph_sourceip; //Source IP address
     struct  in_addr    iph_destip;   //Destination IP address
 };
+
+
 unsigned short in_cksum(unsigned short *buf, int length);
+
+
+
 void send_raw_ip_packet(struct ipheader* ip){
     struct sockaddr_in dest_info;
     int enable = 1;
@@ -81,6 +83,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header ,const u_char *pa
         fake_icmp->icmp_id=icmp->icmp_id;
         fake_icmp->icmp_seq=icmp->icmp_seq;
         fake_icmp->icmp_chksum=in_cksum((unsigned short *)fake_icmp,sizeof(struct icmpheader));
+
         printf("hey\n");
         fake_ip->iph_destip = ip->iph_sourceip;
         fake_ip->iph_sourceip = ip->iph_destip;
@@ -121,20 +124,15 @@ int main()
 	struct pcap_pkthdr header;	/* The header that pcap gives us */
 	const u_char *packet;		/* The actual packet */
 
-	/* Define the device */
-	dev = "lo";//pcap_lookupdev(errbuf);
-	if (dev == NULL) {
-		fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
-		return(2);
-	}
-	/* Find the properties for the device */
-	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
-		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
-		net = 0;
-		mask = 0;
-	}
-	/* Open the session in promiscuous mode */
-	handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
+	
+	// /* Find the properties for the device */
+	// if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
+	// 	fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
+	// 	net = 0;
+	// 	mask = 0;
+	// }
+	// /* Open the session in promiscuous mode */
+	handle = pcap_open_live("br-ccc8bcc8410d", BUFSIZ, 1, 1000, errbuf);
 	if (handle == NULL) {
 		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
 		return(2);
