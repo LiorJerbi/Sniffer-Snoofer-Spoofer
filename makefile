@@ -1,7 +1,12 @@
 CC = gcc
 FLAGS = -Wall -g -fPIC
 
-all: Sniffer Spoofer Snoofer
+all: Sniffer Spoofer Snoofer Gateway
+
+
+
+Gateway: Gateway.o
+	$(CC) $(FLAGS) -o Gateway Gateway.o
 
 Snoofer: Snoofer.o
 	$(CC) $(FLAGS) -o Snoofer Snoofer.o -lpcap
@@ -12,6 +17,11 @@ Spoofer:Spoofer.o
 
 Sniffer: Sniffer.o
 	$(CC) $(FLAGS) -o Sniffer Sniffer.o -lpcap
+	
+
+
+Gateway.o: Gateway.c	
+	$(CC) $(FLAGS) -c Gateway.c
 
 Snoofer.o: Snoofer.c
 	$(CC) $(FLAGS) -c Snoofer.c 
@@ -26,4 +36,4 @@ Sniffer.o: Sniffer.c
 .PHONY: clean all
 
 clean:
-	rm -f *.o Sniffer Spoofer Snoofer
+	rm -f *.o Sniffer Spoofer Snoofer Gateway

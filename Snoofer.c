@@ -84,7 +84,6 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header ,const u_char *pa
         fake_icmp->icmp_seq=icmp->icmp_seq;
         fake_icmp->icmp_chksum=in_cksum((unsigned short *)fake_icmp,sizeof(struct icmpheader));
 
-        printf("hey\n");
         fake_ip->iph_destip = ip->iph_sourceip;
         fake_ip->iph_sourceip = ip->iph_destip;
         fake_ip->iph_flag = ip->iph_flag;
@@ -125,13 +124,8 @@ int main()
 	const u_char *packet;		/* The actual packet */
 
 	
-	// /* Find the properties for the device */
-	// if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
-	// 	fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
-	// 	net = 0;
-	// 	mask = 0;
-	// }
-	// /* Open the session in promiscuous mode */
+
+	/* Open the session in promiscuous mode */
 	handle = pcap_open_live("br-ccc8bcc8410d", BUFSIZ, 1, 1000, errbuf);
 	if (handle == NULL) {
 		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
