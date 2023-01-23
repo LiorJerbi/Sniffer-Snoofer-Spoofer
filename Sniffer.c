@@ -79,8 +79,8 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header,
             
             printf(" \n ****************************************************** \n");
             printf("  ************* FRAME NUM %d ********************************* \n",counter);
-            printf("--->Sent from IP Address:%s  Src_PORT:%d    To IP Adress:%s  Src_PORT:%d   \n",srcip,ntohs(tcp->th_sport),dstip,ntohs(tcp->th_dport));
-            printf("--->Unix Time:%u\n--->Packet Size:%d\n--->Flags<--\n:--->Cache:[%d]\n--->Steps:[%d]\n--->Type:[%d]  \n",ntohl(app->unixtime),app->length,(flags&app->c_flag),(flags&app->s_flag),(flags&app->t_flag));
+            printf("--->Sent from IP Address:%s  Src_PORT:%d    To IP Adress:%s  Dst_PORT:%d   \n",srcip,ntohs(tcp->th_sport),dstip,ntohs(tcp->th_dport));
+            printf("--->Unix Time:%u\n--->AppHeader Size:%d\n--->Flags<--\n:--->Cache:[%d]\n--->Steps:[%d]\n--->Type:[%d]  \n",ntohl(app->unixtime),app_len,(flags&app->c_flag),(flags&app->s_flag),(flags&app->t_flag));
             printf("--->Status:[%d]\n--->Cache Control[%d]\n",status,ntohs(app->cache));
             for (int i = 0; i < paySize; ++i){
                 if (!(i & 15)){
@@ -94,7 +94,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header,
             ,srcip,dstip,ntohs(tcp->th_sport),ntohs(tcp->th_dport));
             printf(" \n ****************************************************** \n");
             printf("  ************* FRAME NUM %d ********************************* \n",counter);
-            printf("\n--->Sent from IP Address:%s  Src_PORT:%d    To IP Adress:%s  Src_PORT:%d   \n\n",srcip,ntohs(tcp->th_sport),dstip,ntohs(tcp->th_dport));
+            printf("\n--->Sent from IP Address: %s  Src_PORT: %d    To IP Adress: %s  Dst_PORT: %d   \n\n",srcip,ntohs(tcp->th_sport),dstip,ntohs(tcp->th_dport));
         }
         fclose(fp);
         printf("\n");
